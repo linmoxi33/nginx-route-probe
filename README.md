@@ -41,6 +41,9 @@ python3 bin/nginx_route_probe.py \
   --requests examples/in/requests.txt
 ```
 
+`python3 tests/test_route_probe.py` runs the 35-test behavioural suite (stdlib unittest only).
+```
+
 ```
 example.com /exact  ->  server#0 = /exact  status=200
 example.com /api/v1/users  ->  server#0 /api/v1/  status=200
