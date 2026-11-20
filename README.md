@@ -25,7 +25,10 @@ nested locations), plus `rewrite ... last|break` re-matching with nginx's 10-cyc
 ## Install
 
 ```bash
-git clone git@github.com:linmoxi33/nginx-route-probe.git
+# any machine:
+git clone https://github.com/linmoxi33/nginx-route-probe.git
+# or, on the machine that has the github-linmoxi33 SSH alias:
+git clone git@github-linmoxi33:linmoxi33/nginx-route-probe.git
 cd nginx-route-probe
 python3 --version   # 3.10+; no third-party dependencies
 ```
