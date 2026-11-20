@@ -1,0 +1,10 @@
+# host uri [port]
+example.com /exact
+www.example.com /api/v1/users
+example.com /api/v1/users
+example.com /static/app.js
+example.com /index.php
+example.com /img/logo.PNG
+example.com /missing
+api.example.com /old/thing
+api.example.com /loop/x

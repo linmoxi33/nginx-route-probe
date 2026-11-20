@@ -1,0 +1,880 @@
+{
+  "tool": "nginx-route-probe",
+  "version": "1.0.0",
+  "config": "examples/in/nginx.conf",
+  "servers": [
+    {
+      "index": 0,
+      "server_name": [
+        "example.com",
+        "www.example.com"
+      ],
+      "listen": [
+        {
+          "address": "*",
+          "port": 80,
+          "default_server": true,
+          "ssl": false
+        }
+      ],
+      "locations": [
+        {
+          "path": "= /exact",
+          "name": "/exact",
+          "modifier": "=",
+          "index": 0,
+          "nested": []
+        },
+        {
+          "path": "/api/",
+          "name": "/api/",
+          "modifier": "^~",
+          "index": 1,
+          "nested": []
+        },
+        {
+          "path": "/api/v1/",
+          "name": "/api/v1/",
+          "modifier": "",
+          "index": 2,
+          "nested": []
+        },
+        {
+          "path": "~ .php$",
+          "name": ".php$",
+          "modifier": "~",
+          "index": 3,
+          "nested": []
+        },
+        {
+          "path": "~* .(png|jpg|gif)$",
+          "name": ".(png|jpg|gif)$",
+          "modifier": "~*",
+          "index": 4,
+          "nested": []
+        },
+        {
+          "path": "/static/",
+          "name": "/static/",
+          "modifier": "",
+          "index": 5,
+          "nested": []
+        },
+        {
+          "path": "/",
+          "name": "/",
+          "modifier": "",
+          "index": 6,
+          "nested": []
+        },
+        {
+          "path": "@ @fallback",
+          "name": "@fallback",
+          "modifier": "@",
+          "index": 7,
+          "nested": []
+        },
+        {
+          "path": "= /exact",
+          "name": "/exact",
+          "modifier": "=",
+          "index": 8,
+          "nested": []
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "server_name": [
+        "api.example.com"
+      ],
+      "listen": [
+        {
+          "address": "*",
+          "port": 80,
+          "default_server": false,
+          "ssl": false
+        }
+      ],
+      "locations": [
+        {
+          "path": "/",
+          "name": "/",
+          "modifier": "",
+          "index": 0,
+          "nested": []
+        },
+        {
+          "path": "/new/",
+          "name": "/new/",
+          "modifier": "",
+          "index": 1,
+          "nested": []
+        },
+        {
+          "path": "/loop/",
+          "name": "/loop/",
+          "modifier": "",
+          "index": 2,
+          "nested": []
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "level": "error",
+      "code": "duplicate_location",
+      "message": "duplicate location '= /exact' in server #0; the second block at index 8 is unreachable",
+      "server": 0,
+      "location": "= /exact",
+      "shadowed_by": "= /exact"
+    }
+  ],
+  "results": [
+    {
+      "request": {
+        "host": "example.com",
+        "uri": "/exact",
+        "port": null
+      },
+      "server": {
+        "index": 0,
+        "server_name": [
+          "example.com",
+          "www.example.com"
+        ]
+      },
+      "location": {
+        "path": "= /exact",
+        "name": "/exact",
+        "modifier": "=",
+        "index": 0,
+        "nested": []
+      },
+      "matched_path": "= /exact",
+      "final_uri": "/exact",
+      "status": 200,
+      "loop_guard": false,
+      "trace": [
+        {
+          "step": "listen_filter",
+          "port": null,
+          "candidates": [
+            0,
+            1
+          ]
+        },
+        {
+          "step": "server_name_exact",
+          "pattern": "example.com",
+          "server": 0
+        },
+        {
+          "step": "server_selected",
+          "server": 0,
+          "how": "server_name"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 0,
+          "uri": "/exact"
+        },
+        {
+          "step": "exact_match",
+          "location": "= /exact"
+        }
+      ]
+    },
+    {
+      "request": {
+        "host": "www.example.com",
+        "uri": "/api/v1/users",
+        "port": null
+      },
+      "server": {
+        "index": 0,
+        "server_name": [
+          "example.com",
+          "www.example.com"
+        ]
+      },
+      "location": {
+        "path": "@ @fallback",
+        "name": "@fallback",
+        "modifier": "@",
+        "index": 7,
+        "nested": []
+      },
+      "matched_path": "@ @fallback",
+      "final_uri": "/api/v1/users",
+      "status": 200,
+      "loop_guard": false,
+      "trace": [
+        {
+          "step": "listen_filter",
+          "port": null,
+          "candidates": [
+            0,
+            1
+          ]
+        },
+        {
+          "step": "server_name_exact",
+          "pattern": "www.example.com",
+          "server": 0
+        },
+        {
+          "step": "server_selected",
+          "server": 0,
+          "how": "server_name"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 0,
+          "uri": "/api/v1/users"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/api/v1/",
+          "len": 8
+        },
+        {
+          "step": "fallback_to_prefix",
+          "location": "/api/v1/"
+        },
+        {
+          "step": "try_files_named_redirect",
+          "to": "@fallback"
+        }
+      ]
+    },
+    {
+      "request": {
+        "host": "example.com",
+        "uri": "/api/v1/users",
+        "port": null
+      },
+      "server": {
+        "index": 0,
+        "server_name": [
+          "example.com",
+          "www.example.com"
+        ]
+      },
+      "location": {
+        "path": "@ @fallback",
+        "name": "@fallback",
+        "modifier": "@",
+        "index": 7,
+        "nested": []
+      },
+      "matched_path": "@ @fallback",
+      "final_uri": "/api/v1/users",
+      "status": 200,
+      "loop_guard": false,
+      "trace": [
+        {
+          "step": "listen_filter",
+          "port": null,
+          "candidates": [
+            0,
+            1
+          ]
+        },
+        {
+          "step": "server_name_exact",
+          "pattern": "example.com",
+          "server": 0
+        },
+        {
+          "step": "server_selected",
+          "server": 0,
+          "how": "server_name"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 0,
+          "uri": "/api/v1/users"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/api/v1/",
+          "len": 8
+        },
+        {
+          "step": "fallback_to_prefix",
+          "location": "/api/v1/"
+        },
+        {
+          "step": "try_files_named_redirect",
+          "to": "@fallback"
+        }
+      ]
+    },
+    {
+      "request": {
+        "host": "example.com",
+        "uri": "/static/app.js",
+        "port": null
+      },
+      "server": {
+        "index": 0,
+        "server_name": [
+          "example.com",
+          "www.example.com"
+        ]
+      },
+      "location": {
+        "path": "/static/",
+        "name": "/static/",
+        "modifier": "",
+        "index": 5,
+        "nested": []
+      },
+      "matched_path": "/static/",
+      "final_uri": "/static/app.js",
+      "status": 200,
+      "loop_guard": false,
+      "trace": [
+        {
+          "step": "listen_filter",
+          "port": null,
+          "candidates": [
+            0,
+            1
+          ]
+        },
+        {
+          "step": "server_name_exact",
+          "pattern": "example.com",
+          "server": 0
+        },
+        {
+          "step": "server_selected",
+          "server": 0,
+          "how": "server_name"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 0,
+          "uri": "/static/app.js"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/static/",
+          "len": 8
+        },
+        {
+          "step": "fallback_to_prefix",
+          "location": "/static/"
+        }
+      ]
+    },
+    {
+      "request": {
+        "host": "example.com",
+        "uri": "/index.php",
+        "port": null
+      },
+      "server": {
+        "index": 0,
+        "server_name": [
+          "example.com",
+          "www.example.com"
+        ]
+      },
+      "location": {
+        "path": "~ .php$",
+        "name": ".php$",
+        "modifier": "~",
+        "index": 3,
+        "nested": []
+      },
+      "matched_path": "~ .php$",
+      "final_uri": "/index.php",
+      "status": 200,
+      "loop_guard": false,
+      "trace": [
+        {
+          "step": "listen_filter",
+          "port": null,
+          "candidates": [
+            0,
+            1
+          ]
+        },
+        {
+          "step": "server_name_exact",
+          "pattern": "example.com",
+          "server": 0
+        },
+        {
+          "step": "server_selected",
+          "server": 0,
+          "how": "server_name"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 0,
+          "uri": "/index.php"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/",
+          "len": 1
+        },
+        {
+          "step": "regex_match",
+          "location": "~ .php$",
+          "order": 3
+        }
+      ]
+    },
+    {
+      "request": {
+        "host": "example.com",
+        "uri": "/img/logo.PNG",
+        "port": null
+      },
+      "server": {
+        "index": 0,
+        "server_name": [
+          "example.com",
+          "www.example.com"
+        ]
+      },
+      "location": {
+        "path": "~* .(png|jpg|gif)$",
+        "name": ".(png|jpg|gif)$",
+        "modifier": "~*",
+        "index": 4,
+        "nested": []
+      },
+      "matched_path": "~* .(png|jpg|gif)$",
+      "final_uri": "/img/logo.PNG",
+      "status": 200,
+      "loop_guard": false,
+      "trace": [
+        {
+          "step": "listen_filter",
+          "port": null,
+          "candidates": [
+            0,
+            1
+          ]
+        },
+        {
+          "step": "server_name_exact",
+          "pattern": "example.com",
+          "server": 0
+        },
+        {
+          "step": "server_selected",
+          "server": 0,
+          "how": "server_name"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 0,
+          "uri": "/img/logo.PNG"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/",
+          "len": 1
+        },
+        {
+          "step": "regex_match",
+          "location": "~* .(png|jpg|gif)$",
+          "order": 4
+        }
+      ]
+    },
+    {
+      "request": {
+        "host": "example.com",
+        "uri": "/missing",
+        "port": null
+      },
+      "server": {
+        "index": 0,
+        "server_name": [
+          "example.com",
+          "www.example.com"
+        ]
+      },
+      "location": {
+        "path": "@ @fallback",
+        "name": "@fallback",
+        "modifier": "@",
+        "index": 7,
+        "nested": []
+      },
+      "matched_path": "@ @fallback",
+      "final_uri": "/missing",
+      "status": 200,
+      "loop_guard": false,
+      "trace": [
+        {
+          "step": "listen_filter",
+          "port": null,
+          "candidates": [
+            0,
+            1
+          ]
+        },
+        {
+          "step": "server_name_exact",
+          "pattern": "example.com",
+          "server": 0
+        },
+        {
+          "step": "server_selected",
+          "server": 0,
+          "how": "server_name"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 0,
+          "uri": "/missing"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/",
+          "len": 1
+        },
+        {
+          "step": "fallback_to_prefix",
+          "location": "/"
+        },
+        {
+          "step": "try_files_named_redirect",
+          "to": "@fallback"
+        }
+      ]
+    },
+    {
+      "request": {
+        "host": "api.example.com",
+        "uri": "/old/thing",
+        "port": null
+      },
+      "server": {
+        "index": 1,
+        "server_name": [
+          "api.example.com"
+        ]
+      },
+      "location": {
+        "path": "/new/",
+        "name": "/new/",
+        "modifier": "",
+        "index": 1,
+        "nested": []
+      },
+      "matched_path": "/new/",
+      "final_uri": "/new/$1",
+      "status": 200,
+      "loop_guard": false,
+      "trace": [
+        {
+          "step": "listen_filter",
+          "port": null,
+          "candidates": [
+            0,
+            1
+          ]
+        },
+        {
+          "step": "server_name_exact",
+          "pattern": "api.example.com",
+          "server": 1
+        },
+        {
+          "step": "server_selected",
+          "server": 1,
+          "how": "server_name"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 0,
+          "uri": "/old/thing"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/",
+          "len": 1
+        },
+        {
+          "step": "fallback_to_prefix",
+          "location": "/"
+        },
+        {
+          "step": "rewrite_last",
+          "from": "/old/thing",
+          "to": "/new/$1"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 1,
+          "uri": "/new/$1"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/new/",
+          "len": 5
+        },
+        {
+          "step": "fallback_to_prefix",
+          "location": "/new/"
+        }
+      ]
+    },
+    {
+      "request": {
+        "host": "api.example.com",
+        "uri": "/loop/x",
+        "port": null
+      },
+      "server": {
+        "index": 1,
+        "server_name": [
+          "api.example.com"
+        ]
+      },
+      "location": {
+        "path": "/loop/",
+        "name": "/loop/",
+        "modifier": "",
+        "index": 2,
+        "nested": []
+      },
+      "matched_path": "/loop/",
+      "final_uri": "/loop//loop//loop//loop//loop//loop//loop//loop//loop//loop//loop/x",
+      "status": 500,
+      "loop_guard": true,
+      "trace": [
+        {
+          "step": "listen_filter",
+          "port": null,
+          "candidates": [
+            0,
+            1
+          ]
+        },
+        {
+          "step": "server_name_exact",
+          "pattern": "api.example.com",
+          "server": 1
+        },
+        {
+          "step": "server_selected",
+          "server": 1,
+          "how": "server_name"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 0,
+          "uri": "/loop/x"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/loop/",
+          "len": 6
+        },
+        {
+          "step": "fallback_to_prefix",
+          "location": "/loop/"
+        },
+        {
+          "step": "rewrite_last",
+          "from": "/loop/x",
+          "to": "/loop//loop/x"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 1,
+          "uri": "/loop//loop/x"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/loop/",
+          "len": 6
+        },
+        {
+          "step": "fallback_to_prefix",
+          "location": "/loop/"
+        },
+        {
+          "step": "rewrite_last",
+          "from": "/loop//loop/x",
+          "to": "/loop//loop//loop/x"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 2,
+          "uri": "/loop//loop//loop/x"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/loop/",
+          "len": 6
+        },
+        {
+          "step": "fallback_to_prefix",
+          "location": "/loop/"
+        },
+        {
+          "step": "rewrite_last",
+          "from": "/loop//loop//loop/x",
+          "to": "/loop//loop//loop//loop/x"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 3,
+          "uri": "/loop//loop//loop//loop/x"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/loop/",
+          "len": 6
+        },
+        {
+          "step": "fallback_to_prefix",
+          "location": "/loop/"
+        },
+        {
+          "step": "rewrite_last",
+          "from": "/loop//loop//loop//loop/x",
+          "to": "/loop//loop//loop//loop//loop/x"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 4,
+          "uri": "/loop//loop//loop//loop//loop/x"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/loop/",
+          "len": 6
+        },
+        {
+          "step": "fallback_to_prefix",
+          "location": "/loop/"
+        },
+        {
+          "step": "rewrite_last",
+          "from": "/loop//loop//loop//loop//loop/x",
+          "to": "/loop//loop//loop//loop//loop//loop/x"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 5,
+          "uri": "/loop//loop//loop//loop//loop//loop/x"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/loop/",
+          "len": 6
+        },
+        {
+          "step": "fallback_to_prefix",
+          "location": "/loop/"
+        },
+        {
+          "step": "rewrite_last",
+          "from": "/loop//loop//loop//loop//loop//loop/x",
+          "to": "/loop//loop//loop//loop//loop//loop//loop/x"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 6,
+          "uri": "/loop//loop//loop//loop//loop//loop//loop/x"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/loop/",
+          "len": 6
+        },
+        {
+          "step": "fallback_to_prefix",
+          "location": "/loop/"
+        },
+        {
+          "step": "rewrite_last",
+          "from": "/loop//loop//loop//loop//loop//loop//loop/x",
+          "to": "/loop//loop//loop//loop//loop//loop//loop//loop/x"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 7,
+          "uri": "/loop//loop//loop//loop//loop//loop//loop//loop/x"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/loop/",
+          "len": 6
+        },
+        {
+          "step": "fallback_to_prefix",
+          "location": "/loop/"
+        },
+        {
+          "step": "rewrite_last",
+          "from": "/loop//loop//loop//loop//loop//loop//loop//loop/x",
+          "to": "/loop//loop//loop//loop//loop//loop//loop//loop//loop/x"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 8,
+          "uri": "/loop//loop//loop//loop//loop//loop//loop//loop//loop/x"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/loop/",
+          "len": 6
+        },
+        {
+          "step": "fallback_to_prefix",
+          "location": "/loop/"
+        },
+        {
+          "step": "rewrite_last",
+          "from": "/loop//loop//loop//loop//loop//loop//loop//loop//loop/x",
+          "to": "/loop//loop//loop//loop//loop//loop//loop//loop//loop//loop/x"
+        },
+        {
+          "step": "match_cycle",
+          "cycle": 9,
+          "uri": "/loop//loop//loop//loop//loop//loop//loop//loop//loop//loop/x"
+        },
+        {
+          "step": "longest_prefix",
+          "location": "/loop/",
+          "len": 6
+        },
+        {
+          "step": "fallback_to_prefix",
+          "location": "/loop/"
+        },
+        {
+          "step": "rewrite_last",
+          "from": "/loop//loop//loop//loop//loop//loop//loop//loop//loop//loop/x",
+          "to": "/loop//loop//loop//loop//loop//loop//loop//loop//loop//loop//loop/x"
+        },
+        {
+          "step": "rewrite_limit_exceeded",
+          "cycles": 10
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "requests": 9,
+    "findings": 1,
+    "errors": 1,
+    "warnings": 0,
+    "rewrite_loops": 1
+  }
+}
